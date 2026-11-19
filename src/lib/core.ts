@@ -25,7 +25,8 @@ export function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", timeZone: "Africa/Douala" });
 }
 
-export const waLink = (number: string, text: string) => `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
+/** Lien direct api.whatsapp.com : évite la redirection wa.me qui abîme certains caractères. */
+export const waLink = (number: string, text: string) => `https://api.whatsapp.com/send?phone=${number}&text=${encodeURIComponent(text)}`;
 
 export function orderRef(d = new Date()) {
   const p = (n: number) => String(n).padStart(2, "0");

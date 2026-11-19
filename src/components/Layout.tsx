@@ -54,7 +54,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { data: cities } = useCities();
   return (
-    <div className={`mmenu ${open ? "on" : ""}`} aria-hidden={!open} role="dialog" aria-label="Menu">
+    <div className={`mmenu ${open ? "on" : ""}`} aria-hidden={!open} inert={!open} role="dialog" aria-label="Menu">
       <div className="mmenu-top"><Logo /><button className="x" onClick={onClose} aria-label="Fermer le menu">✕</button></div>
       <nav>
         <Link to="/" onClick={onClose}>Accueil</Link>
@@ -130,7 +130,7 @@ function MiniCart() {
   const go = (to: string) => { setMini(false); nav(to); };
   return <>
     <div className={`scrim ${miniOpen ? "on" : ""}`} onClick={() => setMini(false)} />
-    <aside className={`drawer ${miniOpen ? "on" : ""}`} aria-hidden={!miniOpen} aria-label="Article ajouté">
+    <aside className={`drawer ${miniOpen ? "on" : ""}`} aria-hidden={!miniOpen} inert={!miniOpen} aria-label="Article ajouté">
       <div className="d-head"><h3>Ajouté à votre écrin</h3><button className="x" onClick={() => setMini(false)} aria-label="Fermer">✕</button></div>
       <div className="d-body">
         {added && <div className="mini-added">

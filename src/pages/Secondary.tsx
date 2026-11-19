@@ -172,7 +172,7 @@ export function BusinessPage() {
   const [f, setF] = useState({ company: "", contact: "", type: "Pin's à notre logo", qty: "", date: "", logo: "Oui", msg: "" });
   const [tried, setTried] = useState(false);
   const ok = f.company.trim() && f.contact.trim();
-  const msg = `Bonjour DOLLARS BIJOUX, je souhaite un devis entreprise.\n\n🏢 Entreprise : ${f.company}\n👤 Contact : ${f.contact}\n📦 Produit : ${f.type}\n🔢 Quantité : ${f.qty || "à définir"}\n📅 Date souhaitée : ${f.date || "à définir"}\n🖼️ Logo disponible : ${f.logo}${f.msg ? `\n📝 ${f.msg}` : ""}`;
+  const msg = `Bonjour DOLLARS BIJOUX, je souhaite un devis entreprise.\n\nEntreprise : ${f.company}\nContact : ${f.contact}\nProduit : ${f.type}\nQuantité : ${f.qty || "à définir"}\nDate souhaitée : ${f.date || "à définir"}\nLogo disponible : ${f.logo}${f.msg ? `\n${f.msg}` : ""}`;
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
   return <>
     <Seo title="Entreprises" description="Pin's, porte-clés, badges et accessoires d'hôtel à votre logo, fabriqués au Cameroun." />
@@ -211,7 +211,7 @@ export function ResellersPage() {
   const [f, setF] = useState({ name: "", city: "", activity: "", social: "" });
   const [tried, setTried] = useState(false);
   const ok = f.name.trim() && f.city.trim();
-  const msg = `${s?.data.whatsapp_message || "Bonjour DOLLARS BIJOUX, je souhaite devenir revendeur."}\n\n👤 Nom : ${f.name}\n📍 Ville : ${f.city}\n💼 Activité actuelle : ${f.activity || "—"}\n📱 Réseaux : ${f.social || "—"}`;
+  const msg = `${s?.data.whatsapp_message || "Bonjour DOLLARS BIJOUX, je souhaite devenir revendeur."}\n\nNom : ${f.name}\nVille : ${f.city}\nActivité actuelle : ${f.activity || "—"}\nRéseaux : ${f.social || "—"}`;
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   return <>
     <Seo title="Revendeurs" description="Devenez revendeur ou grossiste Dollars Bijoux." />
