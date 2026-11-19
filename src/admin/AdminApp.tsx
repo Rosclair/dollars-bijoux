@@ -39,27 +39,45 @@ const NAV: ({ grp: string } | { to: string; label: string; end?: boolean })[] = 
 ];
 
 function Login() {
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
+  const [pwd2, setPwd2] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [info, setInfo] = useState("");
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); setBusy(true); setErr("");
+    e.preventDefault(); setErr(""); setInfo("");
+    if (mode === "signup") {
+      if (pwd.length < 8) { setErr("Le mot de passe doit faire au moins 8 caractères."); return; }
+      if (pwd !== pwd2) { setErr("Les deux mots de passe ne correspondent pas."); return; }
+      setBusy(true);
+      const { data, error } = await supabase.auth.signUp({ email: email.trim(), password: pwd, options: { emailRedirectTo: `${location.origin}/admin` } });
+      setBusy(false);
+      if (error) { setErr(error.message.includes("already") ? "Un compte existe déjà avec cet email : connectez-vous." : error.message); return; }
+      if (!data.session) setInfo("Compte créé. Ouvrez l'email de confirmation envoyé à cette adresse, cliquez sur le lien, puis connectez-vous ici.");
+      return;
+    }
+    setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: pwd });
     setBusy(false);
-    if (error) setErr(error.message.includes("Invalid") ? "Email ou mot de passe incorrect." : error.message);
+    if (error) setErr(error.message.includes("confirm") ? "Confirmez d'abord votre adresse avec le lien reçu par email." : error.message.includes("Invalid") ? "Email ou mot de passe incorrect." : error.message);
   };
   return (
-    <div className="adm login" style={{ display: "grid" }}>
+    <div className="adm login">
       <title>Connexion — Administration Dollars Bijoux</title>
       <meta name="robots" content="noindex" />
       <form onSubmit={submit}>
         <Logo />
-        <div><h1 style={{ fontSize: 28 }}>Administration</h1><p className="muted" style={{ margin: "4px 0 0" }}>Accès réservé à l'équipe Dollars Bijoux.</p></div>
+        <div><h1 style={{ fontSize: 28 }}>{mode === "login" ? "Administration" : "Créer mon accès"}</h1>
+          <p className="muted" style={{ margin: "4px 0 0" }}>{mode === "login" ? "Accès réservé à l'équipe Dollars Bijoux." : "Uniquement pour une adresse autorisée par l'équipe. Choisissez votre mot de passe."}</p></div>
         <label className="f"><span>Email</span><input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
-        <label className="f"><span>Mot de passe</span><input type="password" autoComplete="current-password" value={pwd} onChange={(e) => setPwd(e.target.value)} required /></label>
+        <label className="f"><span>Mot de passe</span><input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={pwd} onChange={(e) => setPwd(e.target.value)} required /></label>
+        {mode === "signup" && <label className="f"><span>Confirmer le mot de passe</span><input type="password" autoComplete="new-password" value={pwd2} onChange={(e) => setPwd2(e.target.value)} required /></label>}
         {err && <p className="err-a" style={{ margin: 0 }}>{err}</p>}
-        <button className="ab pri" disabled={busy}>{busy ? "Connexion…" : "Se connecter"}</button>
+        {info && <p className="warn-a" style={{ margin: 0 }}>{info}</p>}
+        <button className="ab pri" disabled={busy}>{busy ? "Patientez…" : mode === "login" ? "Se connecter" : "Créer mon accès"}</button>
+        <button type="button" className="ab" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErr(""); setInfo(""); }}>{mode === "login" ? "Première connexion ? Créer mon accès" : "J'ai déjà un accès : me connecter"}</button>
         <Link to="/" className="muted" style={{ fontSize: 12.5, textAlign: "center" }}>← Retour au site</Link>
       </form>
     </div>
