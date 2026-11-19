@@ -94,11 +94,19 @@ export function Toast() {
   return <div className={`toast ${msg ? "on" : ""}`} role="status">{msg ? <>{Icon.check}{msg}</> : null}</div>;
 }
 
-/* ---------- Titre de page ---------- */
-export function Seo({ title, description }: { title: string; description?: string }) {
+/* ---------- Titre, description, partage ---------- */
+const SITE = (import.meta.env.VITE_SITE_URL as string) || "";
+export function Seo({ title, description, image, jsonLd }: { title: string; description?: string; image?: string | null; jsonLd?: object }) {
+  const full = title === "Dollars Bijoux" ? "Dollars Bijoux — Bijoux personnalisés au Cameroun" : `${title} — Dollars Bijoux`;
+  const img = image ? (image.startsWith("http") ? image : SITE + mediaUrl(image, "lg")) : `${SITE}/og.jpg`;
   return <>
-    <title>{title === "Dollars Bijoux" ? "Dollars Bijoux — Bijoux personnalisés au Cameroun" : `${title} — Dollars Bijoux`}</title>
+    <title>{full}</title>
     {description ? <meta name="description" content={description} /> : null}
+    <meta property="og:title" content={full} />
+    {description ? <meta property="og:description" content={description} /> : null}
+    <meta property="og:image" content={img} />
+    <link rel="canonical" href={SITE + (typeof location !== "undefined" ? location.pathname : "")} />
+    {jsonLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} /> : null}
   </>;
 }
 

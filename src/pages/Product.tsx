@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { mainOption, useCatalog, useCities, useSettings } from "../data/api";
-import { fmt, shortDate, waLink } from "../lib/core";
+import { fmt, mediaUrl, shortDate, waLink } from "../lib/core";
 import NamePreview from "../components/NamePreview";
 import ProductCard from "../components/ProductCard";
 import { Icon, Img, PriceLine, Segmented, Seo, addProduct, toast } from "../components/ui";
@@ -55,7 +55,11 @@ function ProductView() {
   const quoteMsg = `Bonjour DOLLARS BIJOUX, je souhaite un devis pour : ${p.name} (${o.label})${text.trim() ? `\nGravure : « ${text.trim()} »` : ""}`;
 
   return <>
-    <Seo title={p.name} description={p.shortDescription || undefined} />
+    <Seo title={p.name} description={p.shortDescription || undefined} image={p.images[0]?.path} jsonLd={{
+      "@context": "https://schema.org", "@type": "Product", name: p.name, description: p.description || p.shortDescription,
+      image: p.images.map((i) => mediaUrl(i.path, "lg")), brand: { "@type": "Brand", name: "Dollars Bijoux" }, category: p.categoryName,
+      offers: p.options.filter((x) => !x.isQuote).map((x) => ({ "@type": "Offer", name: x.label, price: x.effectivePrice, priceCurrency: "XAF", availability: "https://schema.org/InStock", ...(x.promoEndsAt ? { priceValidUntil: x.promoEndsAt.slice(0, 10) } : {}) })),
+    }} />
     <div className="wrap">
       <nav className="crumbs" aria-label="Fil d'Ariane" style={{ paddingTop: 22 }}>
         <Link to="/">Accueil</Link><span aria-hidden="true">/</span><Link to="/boutique">Boutique</Link>
