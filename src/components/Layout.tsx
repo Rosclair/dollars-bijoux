@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCatalog, useCities, useMainWhatsapp, usePromotions, useSettings } from "../data/api";
 import { cartTotals, useCart } from "../store/cart";
-import { fmt, fmtS, mediaUrl, waLink } from "../lib/core";
+import { fmt, fmtS, mediaUrl, supabase, waLink } from "../lib/core";
 import { CountdownText, Icon, Logo, Toast, toast } from "./ui";
 
 const NAV = [
@@ -174,7 +174,15 @@ function CartRepricer() {
   return null;
 }
 
+function useStaffSession() {
+  const [staff, setStaff] = useState(false);
+  useEffect(() => { supabase.auth.getSession().then(({ data }) => setStaff(!!data.session)); }, []);
+  return staff;
+}
+
 export default function Layout() {
+  const { data: settings } = useSettings();
+  const staff = useStaffSession();
   const [menu, setMenu] = useState(false);
   const loc = useLocation();
   const wa = useMainWhatsapp();
@@ -182,6 +190,14 @@ export default function Layout() {
   const nav = useNavigate();
   useEffect(() => { window.scrollTo(0, 0); setMenu(false); }, [loc.pathname]);
   useEffect(() => { document.body.style.overflow = menu ? "hidden" : ""; }, [menu]);
+  if (settings?.maintenance_mode && !staff) return (
+    <div className="wrap sent" style={{ minHeight: "100vh", display: "grid", placeContent: "center" }}>
+      <Logo big />
+      <h1 style={{ marginTop: 24 }}>Bientôt de retour</h1>
+      <p>Notre boutique en ligne fait peau neuve. En attendant, commandez sur WhatsApp.</p>
+      <div className="btns" style={{ marginTop: 20 }}><a className="btn btn-wa" href={waLink(wa, "Bonjour DOLLARS BIJOUX")} target="_blank" rel="noopener">Commander sur WhatsApp</a></div>
+    </div>
+  );
   return <>
     <a href="#contenu" className="skip">Aller au contenu</a>
     <TopBar />

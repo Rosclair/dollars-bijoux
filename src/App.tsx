@@ -22,6 +22,8 @@ const CreatePage = lazy(() => sec().then((m) => ({ default: m.CreatePage })));
 const InfoPage = lazy(() => sec().then((m) => ({ default: m.InfoPage })));
 const ContactPage = lazy(() => sec().then((m) => ({ default: m.ContactPage })));
 
+const AdminApp = lazy(() => import("./admin/AdminApp"));
+
 const qc = new QueryClient({ defaultOptions: { queries: { retry: 2, refetchOnWindowFocus: false } } });
 const Fallback = () => <div className="loading-page"><div className="sk" style={{ width: "min(90%,1100px)", height: 360 }} /></div>;
 
@@ -31,6 +33,7 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<Fallback />}>
           <Routes>
+            <Route path="admin/*" element={<AdminApp />} />
             <Route element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="boutique" element={<Shop />} />
