@@ -35,28 +35,53 @@ export function Img({ path, alt, sizes, className, eager }: { path?: string | nu
   return <img src={mediaUrl(path, "lg")} srcSet={mediaSrcSet(path)} sizes={sizes} alt={alt} className={className} loading={eager ? "eager" : "lazy"} decoding="async" {...(eager ? { fetchPriority: "high" as const } : {})} />;
 }
 
-/* ---------- Compte à rebours ---------- */
+/* ---------- Compte à rebours (une seule horloge partagée pour toute la page) ---------- */
+const clock = { now: Date.now(), subs: new Set<() => void>(), timer: 0 as any };
+function subscribeClock(fn: () => void) {
+  clock.subs.add(fn);
+  if (!clock.timer) clock.timer = setInterval(() => { clock.now = Date.now(); clock.subs.forEach((f) => f()); }, 1000);
+  return () => { clock.subs.delete(fn); if (!clock.subs.size) { clearInterval(clock.timer); clock.timer = 0; } };
+}
+export function useNow(active = true) {
+  const [, force] = useState(0);
+  useEffect(() => (active ? subscribeClock(() => force((x) => x + 1)) : undefined), [active]);
+  return clock.now = Date.now();
+}
 export function useCountdown(end?: string | null) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => { if (!end) return; const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, [end]);
+  const now = useNow(!!end);
   const s = end ? Math.max(0, Math.floor((new Date(end).getTime() - now) / 1000)) : 0;
   return { s, d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), sec: s % 60 };
 }
 const pad = (n: number) => String(n).padStart(2, "0");
-export function Countdown({ end }: { end: string }) {
+/** Chiffre qui « bascule » à chaque changement */
+const Digit = ({ v }: { v: string }) => <b key={v} className="flip">{v}</b>;
+export function Countdown({ end, small }: { end: string; small?: boolean }) {
   const c = useCountdown(end);
+  const urgent = c.s > 0 && c.s < 86400;
   return (
-    <div className="countdown" aria-label="Temps restant">
-      <div><b>{pad(c.d)}</b><span>jours</span></div>
-      <div><b>{pad(c.h)}</b><span>heures</span></div>
-      <div><b>{pad(c.m)}</b><span>min</span></div>
-      <div><b>{pad(c.sec)}</b><span>sec</span></div>
+    <div className={`countdown ${small ? "cd-small" : ""} ${urgent ? "urgent" : ""}`} role="timer" aria-label={`Temps restant : ${c.d} jours ${c.h} heures ${c.m} minutes`}>
+      <div><Digit v={pad(c.d)} /><span>jours</span></div>
+      <div><Digit v={pad(c.h)} /><span>heures</span></div>
+      <div><Digit v={pad(c.m)} /><span>min</span></div>
+      <div><Digit v={pad(c.sec)} /><span>sec</span></div>
     </div>
   );
 }
-export function CountdownText({ end }: { end: string }) {
+export function CountdownText({ end, prefix = "Fin dans" }: { end: string; prefix?: string }) {
   const c = useCountdown(end);
-  return <>{c.s ? `Fin dans ${c.d} j ${pad(c.h)} h ${pad(c.m)} min` : "Promo terminée"}</>;
+  if (!c.s) return <>Terminé</>;
+  return <>{prefix} {c.d > 0 ? `${c.d} j ` : ""}{pad(c.h)} h {pad(c.m)} min{c.d === 0 ? ` ${pad(c.sec)} s` : ""}</>;
+}
+/** Petite pastille de temps restant (cartes produit, codes promo) */
+export function TimerChip({ end, prefix = "Fin dans" }: { end: string; prefix?: string }) {
+  const c = useCountdown(end);
+  if (!c.s) return null;
+  return (
+    <span className={`timer-chip ${c.s < 86400 ? "urgent" : ""}`}>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true"><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 2M9 2h6" /></svg>
+      {prefix} {c.d > 0 ? `${c.d}j ` : ""}{pad(c.h)}:{pad(c.m)}:{pad(c.sec)}
+    </span>
+  );
 }
 
 /* ---------- Prix ---------- */

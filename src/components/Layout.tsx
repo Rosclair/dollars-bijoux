@@ -42,7 +42,7 @@ function Header({ onMenu }: { onMenu: () => void }) {
         </nav>
         <div className="h-right">
           <button className="cart-btn" onClick={() => nav("/panier")} aria-label={`Panier, ${count} article(s)`}>
-            {Icon.bag} <span className="hide-xs">Panier</span> <span className="cart-count">{count}</span>
+            {Icon.bag} <span className="hide-xs">Panier</span> <span key={count} className={`cart-count ${count ? "bump" : ""}`}>{count}</span>
           </button>
           <button className="burger" onClick={onMenu} aria-label="Ouvrir le menu">{Icon.menu}</button>
         </div>
@@ -174,6 +174,33 @@ function CartRepricer() {
   return null;
 }
 
+/** Apparition douce des blocs au défilement (désactivée si l'utilisateur préfère moins d'animations). */
+const REVEAL = ".sec-head, .card, .pack, .trust > div, .testi, .promo-hero, .codes .code, .reseller, .split > *, .mariage-top > *, .studio-grid > *, .cat, .page-head .wrap > *, .co-block, .contact-card, .steps > div, .form-card, .empty-state, .cline, .faq details";
+function useScrollReveal() {
+  useEffect(() => {
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.documentElement.classList.add("anim");
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    }), { threshold: 0.08, rootMargin: "0px 0px -6% 0px" });
+    let t: any;
+    const scan = () => {
+      document.querySelectorAll<HTMLElement>(REVEAL).forEach((el) => {
+        if (el.classList.contains("rv")) return;
+        const sib = el.parentElement ? Array.from(el.parentElement.children).indexOf(el) : 0;
+        el.style.setProperty("--d", `${Math.min(sib % 8, 7) * 70}ms`);
+        el.classList.add("rv");
+        io.observe(el);
+      });
+    };
+    scan();
+    const mo = new MutationObserver(() => { clearTimeout(t); t = setTimeout(scan, 60); });
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => { io.disconnect(); mo.disconnect(); clearTimeout(t); };
+  }, []);
+}
+
 function useStaffSession() {
   const [staff, setStaff] = useState(false);
   useEffect(() => { supabase.auth.getSession().then(({ data }) => setStaff(!!data.session)); }, []);
@@ -183,6 +210,7 @@ function useStaffSession() {
 export default function Layout() {
   const { data: settings } = useSettings();
   const staff = useStaffSession();
+  useScrollReveal();
   const [menu, setMenu] = useState(false);
   const loc = useLocation();
   const wa = useMainWhatsapp();
@@ -203,7 +231,7 @@ export default function Layout() {
     <TopBar />
     <Header onMenu={() => setMenu(true)} />
     <MobileMenu open={menu} onClose={() => setMenu(false)} />
-    <main id="contenu"><Outlet /></main>
+    <main id="contenu"><div key={loc.pathname} className="page-fade"><Outlet /></div></main>
     <Footer />
     <a className="fab" href={waLink(wa, "Bonjour DOLLARS BIJOUX, j'ai une question sur vos bijoux.")} target="_blank" rel="noopener" aria-label="Discuter sur WhatsApp">{Icon.wa}</a>
     <div className="mbar">

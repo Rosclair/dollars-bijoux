@@ -44,7 +44,7 @@ export function PromosPage() {
     <section className="sec-tight"><div className="wrap promo-list">
       {isLoading ? <div className="sk" style={{ height: 360 }} /> : promos?.length ? promos.map((p) => <PromoBanner key={p.id} p={p} />) :
         <div className="empty-state"><h2>Pas de promotion en ce moment</h2><p>Rejoignez notre groupe WhatsApp pour être prévenu de la prochaine.</p></div>}
-      {visibleCodes.length > 0 && <div><div className="eyebrow" style={{ marginBottom: 6 }}>Codes promo</div><div className="codes">{visibleCodes.map((c) => <CodeCard key={c.code} code={c.code} text={c.description} />)}</div></div>}
+      {visibleCodes.length > 0 && <div><div className="eyebrow" style={{ marginBottom: 6 }}>Codes promo</div><div className="codes">{visibleCodes.map((c) => <CodeCard key={c.code} code={c.code} text={c.description} end={c.endsAt} />)}</div></div>}
     </div></section>
     {promoProducts.length > 0 && <section style={{ paddingTop: 0 }}><div className="wrap">
       <div className="sec-head"><div><div className="eyebrow">Prix promo</div><h2>Tous les bijoux en promotion</h2></div></div>

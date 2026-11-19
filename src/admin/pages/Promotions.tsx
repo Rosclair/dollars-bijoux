@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fmtS, mediaUrl, supabase } from "../../lib/core";
-import { toast } from "../../components/ui";
+import { CountdownText, toast } from "../../components/ui";
 import { Confirm, F, ImageField, Num, Toggle, fmtDate, fromLocalInput, promoStatus, run, slugify, toLocalInput, useRefresh } from "../kit";
 
 const useAdmPromos = () => useQuery({ queryKey: ["adm-promos"], queryFn: async () => (await supabase.from("promotions").select("*").order("starts_at", { ascending: false })).data ?? [] });
@@ -184,6 +184,10 @@ export function PromotionEdit() {
 }
 
 /* ---------- Codes promo ---------- */
+function CodeState({ c }: { c: any }) {
+  const st = promoStatus(c);
+  return <span style={{ display: "inline-flex", gap: 6, alignItems: "center", marginTop: 4 }}><span className={`chip ${st.c}`}>{st.l === "Terminée" ? "Expiré" : st.l === "Programmée" ? "Programmé" : st.l === "Désactivée" ? "Désactivé" : "Valide"}</span>{st.l === "En cours" && <span className="muted" style={{ fontSize: 12 }}><CountdownText end={c.ends_at} prefix="expire dans" /></span>}</span>;
+}
 export function PromoCodes() {
   const { data } = useQuery({ queryKey: ["adm-codes"], queryFn: async () => (await supabase.from("promo_codes").select("*").order("code")).data ?? [] });
   const refresh = useRefresh();
@@ -193,7 +197,9 @@ export function PromoCodes() {
     const code = (edit.code || "").trim().toUpperCase().replace(/\s+/g, "");
     if (!code) { toast("Le code est obligatoire"); return; }
     const row = { code, description: edit.description || null, discount_type: edit.discount_type, discount_value: edit.discount_value || 0, min_amount: edit.min_amount || 0,
-      starts_at: edit.starts_at || null, ends_at: edit.ends_at || null, show_on_site: edit.show_on_site, is_active: edit.is_active };
+      starts_at: edit.starts_at, ends_at: edit.ends_at, show_on_site: edit.show_on_site, is_active: edit.is_active };
+    if (!edit.starts_at || !edit.ends_at) { toast("Indiquez le début et la date d'expiration du code"); return; }
+    if (new Date(edit.ends_at) <= new Date(edit.starts_at)) { toast("L'expiration doit être après le début"); return; }
     const ok = edit.id ? await run(supabase.from("promo_codes").update(row).eq("id", edit.id).select(), "Code enregistré") : await run(supabase.from("promo_codes").insert(row).select(), "Code créé");
     if (ok) { setEdit(null); refresh(); }
   };
@@ -201,12 +207,12 @@ export function PromoCodes() {
   const label = (c: any) => c.discount_type === "percent" ? `-${c.discount_value} %` : c.discount_type === "fixed" ? `-${fmtS(c.discount_value)}` : "Informatif";
   return <>
     <div className="adm-head"><div><h1>Codes promo</h1><p>Le client saisit le code à la commande ; il est transmis dans le message WhatsApp.</p></div>
-      <button className="ab pri" onClick={() => setEdit({ code: "", description: "", discount_type: "none", discount_value: 0, min_amount: 0, starts_at: null, ends_at: null, show_on_site: true, is_active: true })}>+ Nouveau code</button></div>
+      <button className="ab pri" onClick={() => setEdit({ code: "", description: "", discount_type: "none", discount_value: 0, min_amount: 0, starts_at: new Date().toISOString(), ends_at: new Date(Date.now() + 7 * 86400_000).toISOString(), show_on_site: true, is_active: true })}>+ Nouveau code</button></div>
     <div className="tbl-wrap"><table className="tbl"><thead><tr><th>Code</th><th>Remise</th><th>Validité</th><th>Affiché</th><th>Actif</th><th></th></tr></thead>
       <tbody>{(data ?? []).map((c: any) => <tr key={c.id}>
         <td><b style={{ letterSpacing: ".1em" }}>{c.code}</b><div className="muted" style={{ fontSize: 12 }}>{c.description}</div></td>
         <td>{label(c)}{c.min_amount ? <div className="muted" style={{ fontSize: 12 }}>dès {fmtS(c.min_amount)}</div> : null}</td>
-        <td>{c.starts_at || c.ends_at ? `${fmtDate(c.starts_at)} → ${fmtDate(c.ends_at)}` : "Sans limite"}</td>
+        <td>{fmtDate(c.starts_at)} → {fmtDate(c.ends_at)}<div><CodeState c={c} /></div></td>
         <td>{c.show_on_site ? "Oui" : "Non"}</td><td>{c.is_active ? <span className="chip green">Actif</span> : <span className="chip grey">Inactif</span>}</td>
         <td style={{ whiteSpace: "nowrap" }}><button className="ab sm" onClick={() => setEdit({ ...c })}>Modifier</button> <button className="ab sm danger" onClick={() => setDel(c)}>✕</button></td>
       </tr>)}</tbody></table></div>
@@ -218,8 +224,11 @@ export function PromoCodes() {
         <F label="Description pour le client" full><input type="text" value={edit.description || ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} /></F>
         {edit.discount_type !== "none" && <F label={edit.discount_type === "percent" ? "Remise (%)" : "Remise (FCFA)"}><Num value={edit.discount_value} onChange={(v) => setEdit({ ...edit, discount_value: v ?? 0 })} /></F>}
         <F label="Montant minimum (FCFA)"><Num value={edit.min_amount} onChange={(v) => setEdit({ ...edit, min_amount: v ?? 0 })} /></F>
-        <F label="Début (facultatif)"><input type="datetime-local" value={toLocalInput(edit.starts_at)} onChange={(e) => setEdit({ ...edit, starts_at: fromLocalInput(e.target.value) })} /></F>
-        <F label="Fin (facultatif)"><input type="datetime-local" value={toLocalInput(edit.ends_at)} onChange={(e) => setEdit({ ...edit, ends_at: fromLocalInput(e.target.value) })} /></F>
+        <F label="Valable à partir du *"><input type="datetime-local" value={toLocalInput(edit.starts_at)} onChange={(e) => setEdit({ ...edit, starts_at: fromLocalInput(e.target.value) })} /></F>
+        <F label="Expire le *" hint="Un compte à rebours s'affiche sur le site jusqu'à cette date."><input type="datetime-local" value={toLocalInput(edit.ends_at)} onChange={(e) => setEdit({ ...edit, ends_at: fromLocalInput(e.target.value) })} /></F>
+        <div className="full" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><span className="muted" style={{ fontSize: 12.5 }}>Durée rapide :</span>
+          {[["24 h", 1], ["48 h", 2], ["7 jours", 7], ["30 jours", 30]].map(([l, d]) => <button key={l as string} type="button" className="ab sm" onClick={() => { const s = edit.starts_at ? new Date(edit.starts_at).getTime() : Date.now(); setEdit({ ...edit, starts_at: new Date(s).toISOString(), ends_at: new Date(s + (d as number) * 86400_000).toISOString() }); }}>{l}</button>)}
+          <button type="button" className="ab sm" onClick={() => setEdit({ ...edit, ends_at: endOfMonth() })}>Fin du mois</button></div>
         <Toggle checked={edit.show_on_site} onChange={(v) => setEdit({ ...edit, show_on_site: v })} label="Afficher sur la page Promos" />
         <Toggle checked={edit.is_active} onChange={(v) => setEdit({ ...edit, is_active: v })} label="Actif" />
       </div>

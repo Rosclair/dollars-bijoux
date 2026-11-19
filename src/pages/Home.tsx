@@ -5,7 +5,7 @@ import type { Product, Promotion, Section } from "../data/types";
 import { fmt, fmtS, mediaUrl, waLink } from "../lib/core";
 import NamePreview from "../components/NamePreview";
 import ProductCard, { GridSkeleton } from "../components/ProductCard";
-import { Countdown, Icon, Img, Segmented, Seo, TrustIcon, addProduct, toast } from "../components/ui";
+import { Countdown, Icon, Img, Segmented, Seo, TimerChip, TrustIcon, addProduct, toast } from "../components/ui";
 
 /** Titre avec retour à la ligne volontaire : "Écrivez un prénom. Voyez votre bijou." → 2 lignes */
 const lines = (t?: string | null) => (t || "").split(/(?<=\.)\s+/).flatMap((x, i, a) => (i < a.length - 1 ? [x, <br key={i} />] : [x]));
@@ -154,15 +154,18 @@ function PromoBlock({ s }: { s: Section }) {
           </picture></div>
         </div>
         {s.data.show_codes && visibleCodes.length > 0 && <div className="codes">
-          {visibleCodes.map((c) => <CodeCard key={c.code} code={c.code} text={c.description} />)}
+          {visibleCodes.map((c) => <CodeCard key={c.code} code={c.code} text={c.description} end={c.endsAt} />)}
         </div>}
       </div>
     </section>
   );
 }
-export function CodeCard({ code, text }: { code: string; text: string | null }) {
+export function CodeCard({ code, text, end }: { code: string; text: string | null; end?: string | null }) {
   const copy = async () => { try { await navigator.clipboard.writeText(code); toast(`Code ${code} copié`); } catch { toast(`Code : ${code}`); } };
-  return <div className="code"><b>{code}</b><p>{text}</p><button className="linkbtn" onClick={copy}>Copier le code</button></div>;
+  return <div className="code">
+    <div className="code-top"><b>{code}</b>{end && <TimerChip end={end} prefix="Expire dans" />}</div>
+    <p>{text}</p><button className="linkbtn" onClick={copy}>Copier le code</button>
+  </div>;
 }
 
 /* ---------------- BOUTIQUE ---------------- */

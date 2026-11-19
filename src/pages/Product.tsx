@@ -4,7 +4,7 @@ import { mainOption, useCatalog, useCities, useSettings } from "../data/api";
 import { fmt, mediaUrl, shortDate, waLink } from "../lib/core";
 import NamePreview from "../components/NamePreview";
 import ProductCard from "../components/ProductCard";
-import { Icon, Img, PriceLine, Segmented, Seo, addProduct, toast } from "../components/ui";
+import { Countdown, Icon, Img, PriceLine, Segmented, Seo, addProduct, toast } from "../components/ui";
 import NotFound from "./NotFound";
 import { useCart } from "../store/cart";
 import { LoadError } from "./Home";
@@ -81,7 +81,10 @@ function ProductView() {
           <h1>{p.name}</h1>
           {p.shortDescription && <p className="lead">{p.shortDescription}</p>}
           <PriceLine option={o} />
-          {o.promoEndsAt && <div className="promo-until" style={{ marginTop: -12, marginBottom: 18 }}>Prix promo jusqu'au {shortDate(o.promoEndsAt)}</div>}
+          {o.promoEndsAt && <div className="pdp-timer">
+            <div className="promo-until">Prix promo jusqu'au {shortDate(o.promoEndsAt)} · se termine dans</div>
+            <Countdown end={o.promoEndsAt} small />
+          </div>}
 
           {p.options.length > 1 && <div className="field">
             <span className="lbl">{p.optionLabel}</span>

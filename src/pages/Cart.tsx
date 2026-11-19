@@ -4,7 +4,7 @@ import { cartTotals, missingEngraving, useCart, type CartLine } from "../store/c
 import { useCities, usePromoCodes, useSettings } from "../data/api";
 import { fmt, fmtS, mediaUrl, orderRef, supabase, waLink } from "../lib/core";
 import { buildOrderMessage } from "../lib/whatsapp";
-import { PageHead, Seo } from "../components/ui";
+import { CountdownText, PageHead, Seo } from "../components/ui";
 
 /* ---------- Édition de gravure en place ---------- */
 function EngravingEditor({ l }: { l: CartLine }) {
@@ -102,7 +102,7 @@ export function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
   const [codeIn, setCodeIn] = useState("");
-  const [code, setCode] = useState<{ code: string; ok: boolean; discount: number; msg: string } | null>(null);
+  const [code, setCode] = useState<{ code: string; ok: boolean; discount: number; msg: string; end?: string | null } | null>(null);
   const [tried, setTried] = useState(false);
   useEffect(() => { if (!city && cities?.length) setCity(cities[0].name); }, [cities, city]);
   useEffect(() => { useCart.getState().setMini(false); }, []);
@@ -116,13 +116,13 @@ export function CheckoutPage() {
     const found = codes?.find((x) => x.code === c);
     const now = Date.now();
     if (!found || (found.startsAt && new Date(found.startsAt).getTime() > now) || (found.endsAt && new Date(found.endsAt).getTime() < now)) {
-      setCode({ code: c, ok: false, discount: 0, msg: "Code non reconnu : il sera transmis et vérifié par notre équipe." }); return;
+      setCode({ code: c, ok: false, discount: 0, msg: "Code inconnu ou expiré : il sera transmis et vérifié par notre équipe." }); return;
     }
     if (found.minAmount && t.total < found.minAmount) {
       setCode({ code: c, ok: false, discount: 0, msg: `Ce code s'applique dès ${fmt(found.minAmount)} d'achat.` }); return;
     }
     const discount = found.discountType === "percent" ? Math.round((t.total * found.discountValue) / 100) : found.discountType === "fixed" ? Math.min(found.discountValue, t.total) : 0;
-    setCode({ code: c, ok: true, discount, msg: discount ? `Code appliqué : −${fmt(discount)} (remise confirmée sur WhatsApp).` : found.description || "Code enregistré, il sera pris en compte sur WhatsApp." });
+    setCode({ code: c, ok: true, discount, end: found.endsAt, msg: discount ? `Code appliqué : −${fmt(discount)} (remise confirmée sur WhatsApp).` : found.description || "Code enregistré, il sera pris en compte sur WhatsApp." });
   };
 
   const ref = useMemo(() => orderRef(), []);
@@ -204,6 +204,7 @@ export function CheckoutPage() {
               <button className="btn btn-ghost" type="button" onClick={applyCode}>Appliquer</button>
             </div>
             {code && <p className={code.ok ? "ok" : "warn"} style={{ margin: "10px 0 0" }}>{code.msg}</p>}
+            {code?.ok && code.end && <p className="warn" style={{ margin: "6px 0 0" }}>Ce code <CountdownText end={code.end} prefix="expire dans" /> : envoyez votre commande avant.</p>}
           </div>
         </div>
 

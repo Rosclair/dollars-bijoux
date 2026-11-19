@@ -2,13 +2,14 @@ import { Link, useNavigate } from "react-router-dom";
 import type { Product } from "../data/types";
 import { mainOption, minPrice } from "../data/api";
 import { fmtS } from "../lib/core";
-import { Icon, Img, addProduct, toast } from "./ui";
+import { Icon, Img, TimerChip, addProduct, toast } from "./ui";
 
 export default function ProductCard({ p }: { p: Product }) {
   const nav = useNavigate();
   const multi = p.options.length > 1;
   const o = mainOption(p);
   const url = `/produit/${p.slug}`;
+  const promoEnd = p.options.map((x) => x.promoEndsAt).filter(Boolean).sort()[0] as string | undefined;
   const quick = () => {
     if (!multi && p.engraving.mode !== "required" && !o.isQuote) { addProduct(p, o, null); toast(`${p.name} ajouté au panier`); }
     else nav(url);
@@ -22,6 +23,7 @@ export default function ProductCard({ p }: { p: Product }) {
         <span className="cat-l">{p.categoryName}</span>
         <h3><Link to={url}>{p.name}</Link></h3>
         {p.engraving.mode === "required" && <span className="perso-flag">{Icon.pen}Personnalisable</span>}
+        {promoEnd && <TimerChip end={promoEnd} />}
         <div className="pr">
           {o.isQuote ? <b>Sur devis</b> : <>
             {multi && <span className="from">dès</span>}

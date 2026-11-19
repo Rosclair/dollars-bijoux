@@ -79,10 +79,10 @@ export const usePromotionItems = () => useQuery({
 });
 export const usePromoCodes = () => useQuery({
   queryKey: ["promo_codes"], staleTime: STALE,
-  queryFn: async (): Promise<PromoCode[]> => (check(await supabase.from("promo_codes").select("*")) as any[]).map((c) => ({
+  queryFn: async (): Promise<PromoCode[]> => (check(await supabase.from("promo_codes").select("*").order("ends_at")) as any[]).map((c) => ({
     code: c.code, description: c.description, discountType: c.discount_type, discountValue: c.discount_value ?? 0,
     minAmount: c.min_amount ?? 0, startsAt: c.starts_at, endsAt: c.ends_at, showOnSite: !!c.show_on_site,
-  })),
+  })).filter((c) => (!c.startsAt || new Date(c.startsAt).getTime() <= Date.now()) && (!c.endsAt || new Date(c.endsAt).getTime() > Date.now())),
 });
 
 /* ---------- Contenus ---------- */
