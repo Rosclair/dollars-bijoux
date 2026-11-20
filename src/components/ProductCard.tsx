@@ -18,7 +18,7 @@ export default function ProductCard({ p }: { p: Product }) {
     <article className="card">
       {p.badge && <span className={`pill ${p.badge.type === "creation" ? "new" : p.badge.type}`}>{p.badge.label}</span>}
       <Link className="ph" to={url} aria-label={`Voir ${p.name}`}><Img path={p.images[0]?.path} alt={p.images[0]?.alt || p.name} sizes="(max-width:700px) 50vw, 300px" /></Link>
-      <button className="add" type="button" onClick={quick} aria-label={`Ajouter ${p.name} au panier`}>{Icon.plus}</button>
+      <button className="add" type="button" onClick={quick} aria-label={`Ajouter ${p.name} au panier`}>{Icon.cartAdd}</button>
       <div className="body">
         <span className="cat-l">{p.categoryName}</span>
         <h3><Link to={url}>{p.name}</Link></h3>
