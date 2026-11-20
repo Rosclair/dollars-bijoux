@@ -183,3 +183,4 @@ body.has-mbar main{padding-bottom:0}
 @media (max-width:600px){.shop-bar{flex-direction:column;align-items:stretch}.shop-bar .filters{width:100%}.sort{justify-content:flex-end}}
 .sent h1{line-height:1.12}
 .demo-note{margin:18px 0 0;font-size:11.5px;color:#6f6858;text-align:center}
+.co-block.promo-ok{border-color:rgba(214,176,98,.45);background:linear-gradient(135deg,rgba(214,176,98,.10),transparent)}

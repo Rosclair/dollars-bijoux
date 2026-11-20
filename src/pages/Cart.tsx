@@ -108,6 +108,11 @@ export function CheckoutPage() {
   useEffect(() => { useCart.getState().setMini(false); }, []);
 
   const cityObj = cities?.find((c) => c.name === city);
+  /** Un code promo ne s'applique qu'aux articles qui ne sont pas déjà en promotion. */
+  const isDiscounted = (l: typeof lines[number]) => !!l.promotionId || (!!l.compareAtPrice && l.compareAtPrice > l.unitPrice);
+  const eligible = lines.filter((l) => !isDiscounted(l));
+  const eligibleTotal = eligible.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
+  useEffect(() => { if (!eligible.length && code) { setCode(null); setCodeIn(""); } }, [eligible.length, code]);
   const isOther = /autre/i.test(city);
 
   const applyCode = () => {
@@ -118,10 +123,10 @@ export function CheckoutPage() {
     if (!found || (found.startsAt && new Date(found.startsAt).getTime() > now) || (found.endsAt && new Date(found.endsAt).getTime() < now)) {
       setCode({ code: c, ok: false, discount: 0, msg: "Code inconnu ou expiré : il sera transmis et vérifié par notre équipe." }); return;
     }
-    if (found.minAmount && t.total < found.minAmount) {
-      setCode({ code: c, ok: false, discount: 0, msg: `Ce code s'applique dès ${fmt(found.minAmount)} d'achat.` }); return;
+    if (found.minAmount && eligibleTotal < found.minAmount) {
+      setCode({ code: c, ok: false, discount: 0, msg: `Ce code s'applique dès ${fmt(found.minAmount)} d'articles hors promotion.` }); return;
     }
-    const discount = found.discountType === "percent" ? Math.round((t.total * found.discountValue) / 100) : found.discountType === "fixed" ? Math.min(found.discountValue, t.total) : 0;
+    const discount = found.discountType === "percent" ? Math.round((eligibleTotal * found.discountValue) / 100) : found.discountType === "fixed" ? Math.min(found.discountValue, eligibleTotal) : 0;
     setCode({ code: c, ok: true, discount, end: found.endsAt, msg: discount ? `Code appliqué : −${fmt(discount)} (remise confirmée sur WhatsApp).` : found.description || "Code enregistré, il sera pris en compte sur WhatsApp." });
   };
 
@@ -196,16 +201,19 @@ export function CheckoutPage() {
             </div>
           </div>
 
-          <div className="co-block">
+          {eligible.length > 0 && <div className="co-block">
             <h2><span className="n">3</span>Code promo</h2>
-            <p>Vous avez un code reçu sur Facebook ou dans le groupe WhatsApp ?</p>
+            <p>Vous avez un code reçu sur Facebook ou dans le groupe WhatsApp ?{eligible.length < lines.length ? ` Il s'applique uniquement aux articles hors promotion (${fmt(eligibleTotal)}).` : ""}</p>
             <div className="code-row">
               <input type="text" aria-label="Code promo" value={codeIn} onChange={(e) => setCodeIn(e.target.value)} onKeyDown={(e) => e.key === "Enter" && applyCode()} placeholder="Ex. DB2304" />
               <button className="btn btn-ghost" type="button" onClick={applyCode}>Appliquer</button>
             </div>
             {code && <p className={code.ok ? "ok" : "warn"} style={{ margin: "10px 0 0" }}>{code.msg}</p>}
             {code?.ok && code.end && <p className="warn" style={{ margin: "6px 0 0" }}>Ce code <CountdownText end={code.end} prefix="expire dans" /> : envoyez votre commande avant.</p>}
-          </div>
+          </div>}
+          {eligible.length === 0 && <div className="co-block promo-ok">
+            <p style={{ margin: 0 }}><b className="gold">Prix promo appliqué.</b> Vos bijoux bénéficient déjà d'une promotion{t.saved > 0 ? ` : vous économisez ${fmt(t.saved)}` : ""}.</p>
+          </div>}
         </div>
 
         <aside className="summary">
