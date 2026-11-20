@@ -113,6 +113,7 @@ function Footer() {
           </div>
         </div>
         <div className="copy"><span>© {new Date().getFullYear()} Dollars Bijoux. Tous droits réservés.</span><span>Commandes et paiements confirmés sur WhatsApp</span></div>
+        {import.meta.env.VITE_IS_DEMO && <p className="demo-note">Maquette de démonstration proposée à Dollars Bijoux par Rostand NGAGOUM – Création de sites internet</p>}
       </div>
     </footer>
   );

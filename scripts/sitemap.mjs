@@ -22,5 +22,6 @@ const urls = [
   ...promos.map((p) => ({ loc: `/promos/${p.slug}` })),
 ];
 writeFileSync("public/sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `  <url><loc>${SITE}${u.loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}</url>`).join("\n")}\n</urlset>\n`);
-writeFileSync("public/robots.txt", `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /panier\nDisallow: /commande\n\nSitemap: ${SITE}/sitemap.xml\n`);
+const DEMO = process.env.VITE_DEMO !== "0";
+writeFileSync("public/robots.txt", DEMO ? "User-agent: *\nDisallow: /\n" : `User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /panier\nDisallow: /commande\n\nSitemap: ${SITE}/sitemap.xml\n`);
 console.log(`sitemap: ${urls.length} URLs (${SITE})`);
